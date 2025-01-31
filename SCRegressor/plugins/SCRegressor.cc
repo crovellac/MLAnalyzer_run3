@@ -69,7 +69,7 @@ SCRegressor::SCRegressor(const edm::ParameterSet& iConfig)
   //branchesSCreco ( RHTree, fs );
   branchesEB     ( RHTree, fs );
   //branchesTracksAtEBEE     ( RHTree, fs );
-  branchesPhoVars     ( RHTree, fs );
+  //branchesPhoVars     ( RHTree, fs );
   //branchesEvtWgt     ( RHTree, fs );
 
   hNpassed_img = fs->make<TH1F>("hNpassed_img", "isPassed;isPassed;N", 2, 0., 2);
@@ -111,11 +111,21 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   std::cout << " !!!!!" << std::endl;
   */
 
-  edm::Handle<EcalRecHitCollection> EBRecHitsH;
+  //edm::Handle<EcalRecHitCollection> EBRecHitsH;
+  
+  edm::Handle<edm::SortedCollection<EcalRecHit>> EBRecHitsH;
+  edm::Handle<edm::SortedCollection<EcalRecHit>> EERecHitsH;
+  edm::Handle<edm::SortedCollection<EcalRecHit>> ESRecHitsH; 
+
   iEvent.getByToken(EBRecHitCollectionT_, EBRecHitsH);
+  iEvent.getByToken(EERecHitCollectionT_, EERecHitsH);
+  iEvent.getByToken(ESRecHitCollectionT_, ESRecHitsH);
 
   edm::Handle<PhotonCollection> photons;
   iEvent.getByToken(photonCollectionT_, photons);
+  //edm::Handle<std::vector<reco::Photon>> photons;
+  //iEvent.getByLabel("gedPhotons", photons);
+  //iEvent.getByToken(photonCollectionT_, photons);
 
   // Provides access to global cell position and coordinates below
   //edm::ESHandle<CaloGeometry> caloGeomH;

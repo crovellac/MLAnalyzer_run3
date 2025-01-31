@@ -26,11 +26,10 @@
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
 #include "Geometry/CaloGeometry/interface/CaloCellGeometry.h"
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
-
+#include "DataFormats/PatCandidates/interface/Photon.h"
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/EgammaCandidates/interface/Photon.h"
 #include "DataFormats/EgammaCandidates/interface/PhotonFwd.h" // reco::PhotonCollection defined here
-#include "DataFormats/PatCandidates/interface/Photon.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
@@ -102,13 +101,14 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     edm::EDGetTokenT<ElectronCollection> electronCollectionT_;
     edm::EDGetTokenT<MuonCollection> muonCollectionT_;
     edm::EDGetTokenT<PhotonCollection> photonCollectionT_;
+    //edm::EDGetTokenT<std::vector<reco::Photon>> photonCollectionT_;
     edm::EDGetTokenT<JetCollection> jetCollectionT_;
-    edm::EDGetTokenT<EcalRecHitCollection> EBRecHitCollectionT_;
-    edm::EDGetTokenT<EcalRecHitCollection> EERecHitCollectionT_;
-    edm::EDGetTokenT<EcalRecHitCollection> ESRecHitCollectionT_;
-    //edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> EBRecHitCollectionT_;
-    //edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> EERecHitCollectionT_;
-    //edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> ESRecHitCollectionT_;
+    //edm::EDGetTokenT<EcalRecHitCollection> EBRecHitCollectionT_;
+    //edm::EDGetTokenT<EcalRecHitCollection> EERecHitCollectionT_;
+    //edm::EDGetTokenT<EcalRecHitCollection> ESRecHitCollectionT_;
+    edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> EBRecHitCollectionT_;
+    edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> EERecHitCollectionT_;
+    edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> ESRecHitCollectionT_;
 
     edm::EDGetTokenT<EcalRecHitCollection> AODEBRecHitCollectionT_;
     edm::EDGetTokenT<EcalRecHitCollection> AODEERecHitCollectionT_;
@@ -157,7 +157,7 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     void branchesSCreco ( TTree*, edm::Service<TFileService>& );
     void branchesEB ( TTree*, edm::Service<TFileService>& );
     void branchesTracksAtEBEE ( TTree*, edm::Service<TFileService>& );
-    void branchesPhoVars ( TTree*, edm::Service<TFileService>& );
+    //void branchesPhoVars ( TTree*, edm::Service<TFileService>& );
     void branchesEvtWgt ( TTree*, edm::Service<TFileService>& );
 
     void fillSC     ( const edm::Event&, const edm::EventSetup& );
@@ -165,7 +165,7 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     void fillSCreco ( const edm::Event&, const edm::EventSetup& );
     void fillEB     ( const edm::Event&, const edm::EventSetup& );
     void fillTracksAtEBEE ( const edm::Event&, const edm::EventSetup& );
-    void fillPhoVars ( const edm::Event&, const edm::EventSetup& );
+    //void fillPhoVars ( const edm::Event&, const edm::EventSetup& );
     void fillEvtWgt ( const edm::Event&, const edm::EventSetup& );
 
     void branchesPiSel       ( TTree*, edm::Service<TFileService>& );
