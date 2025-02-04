@@ -237,7 +237,7 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   //fillSCaod  ( iEvent, iSetup );
   //fillSCreco ( iEvent, iSetup );
   fillEB     ( iEvent, iSetup );
-  fillEE     ( iEvent, iSetup );
+  //fillEE     ( iEvent, iSetup );
   //fillECALstitched  ( iEvent, iSetup );
   //fillTracksAtEBEE     ( iEvent, iSetup );
   //fillPhoVars     ( iEvent, iSetup );
