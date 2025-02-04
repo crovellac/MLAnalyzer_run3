@@ -41,7 +41,7 @@ SCRegressor::SCRegressor(const edm::ParameterSet& iConfig)
   trgResultsT_ = consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("trgResults"));
   genInfoT_ = consumes<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("generator"));
   lheEventT_ = consumes<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lhe"));
-  caloGeomToken = esConsumes<CaloGeometry, CaloGeometryRecord>();
+  caloGeomToken_ = esConsumes<CaloGeometry, CaloGeometryRecord>();
 
   //now do what ever initialization is needed
   usesResource("TFileService");
@@ -130,7 +130,7 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   // Provides access to global cell position and coordinates below
   //edm::ESHandle<CaloGeometry> caloGeomH;
   //iSetup.get<CaloGeometryRecord>().get(caloGeomH);
-  auto caloGeomH = iSetup.getHandle(caloGeomToken);
+  auto caloGeomH = iSetup.getHandle(caloGeomToken_);
   const CaloGeometry* caloGeom = caloGeomH.product();
 
   // Run explicit jet selection
@@ -237,6 +237,8 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   //fillSCaod  ( iEvent, iSetup );
   //fillSCreco ( iEvent, iSetup );
   fillEB     ( iEvent, iSetup );
+  fillEE     ( iEvent, iSetup );
+  //fillECALstitched  ( iEvent, iSetup );
   //fillTracksAtEBEE     ( iEvent, iSetup );
   //fillPhoVars     ( iEvent, iSetup );
   //fillEvtWgt     ( iEvent, iSetup );

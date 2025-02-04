@@ -26,7 +26,7 @@ void SCRegressor::fillSCaod ( const edm::Event& iEvent, const edm::EventSetup& i
 
   //edm::ESHandle<CaloGeometry> caloGeomH;
   //iSetup.get<CaloGeometryRecord>().get(caloGeomH);
-  auto caloGeomH = iSetup.getHandle(caloGeomToken);
+  auto caloGeomH = iSetup.getHandle(caloGeomToken_);
   const CaloGeometry* caloGeom = caloGeomH.product();
 
   vSCaod_energy_.clear();

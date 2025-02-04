@@ -73,7 +73,7 @@ void SCRegressor::fillTracksAtEBEE ( const edm::Event& iEvent, const edm::EventS
   // Provides access to global cell position
   //edm::ESHandle<CaloGeometry> caloGeomH_;
   //iSetup.get<CaloGeometryRecord>().get( caloGeomH_ );
-  auto caloGeomH = iSetup.getHandle(caloGeomToken);
+  auto caloGeomH = iSetup.getHandle(caloGeomToken_);
   const CaloGeometry* caloGeom = caloGeomH.product();
 
   //reco::Track::TrackQuality tkQt_ = reco::Track::qualityByName("highPurity");

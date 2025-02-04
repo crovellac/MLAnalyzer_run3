@@ -26,7 +26,7 @@ void SCRegressor::fillSCreco ( const edm::Event& iEvent, const edm::EventSetup& 
 
   //edm::ESHandle<CaloGeometry> caloGeomH;
   //iSetup.get<CaloGeometryRecord>().get(caloGeomH);
-  auto caloGeomH = iSetup.getHandle(caloGeomToken);
+  auto caloGeomH = iSetup.getHandle(caloGeomToken_);
   const CaloGeometry* caloGeom = caloGeomH.product();
 
   vSCreco_energy_.clear();

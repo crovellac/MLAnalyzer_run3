@@ -26,7 +26,7 @@ void SCRegressor::fillSC ( const edm::Event& iEvent, const edm::EventSetup& iSet
 
   //edm::ESHandle<CaloGeometry> caloGeomH;
   //iSetup.get<CaloGeometryRecord>().get(caloGeomH);
-  auto caloGeomH = iSetup.getHandle(caloGeomToken);
+  auto caloGeomH = iSetup.getHandle(caloGeomToken_);
   const CaloGeometry* caloGeom = caloGeomH.product();
 
   vSC_energy_.clear();

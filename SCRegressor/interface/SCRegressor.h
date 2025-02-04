@@ -124,7 +124,7 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     edm::EDGetTokenT<edm::TriggerResults> trgResultsT_;
     edm::EDGetTokenT<GenEventInfoProduct> genInfoT_;
     edm::EDGetTokenT<LHEEventProduct> lheEventT_;
-    edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeomToken;
+    edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeomToken_;
 
     static const int nPhotons = 2;
     //static const int nPhotons = 1;
