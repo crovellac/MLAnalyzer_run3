@@ -68,6 +68,8 @@ SCRegressor::SCRegressor(const edm::ParameterSet& iConfig)
   //branchesSCaod  ( RHTree, fs );
   //branchesSCreco ( RHTree, fs );
   branchesEB     ( RHTree, fs );
+  branchesEE     ( RHTree, fs );
+  branchesECALstitched ( RHTree, fs ); 
   //branchesTracksAtEBEE     ( RHTree, fs );
   //branchesPhoVars     ( RHTree, fs );
   //branchesEvtWgt     ( RHTree, fs );
@@ -142,7 +144,7 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   // Run explicit jet selection
   bool hasPassed;
   vPreselPhoIdxs_.clear();
-  nTotal += nPhotons;
+  nTotal += nElectrons;
   //hasPassed = runPiSel ( iEvent, iSetup ); //TODO: add config-level switch
   //hasPassed = runPhotonSel ( iEvent, iSetup );
   //hasPassed = runDiPhotonSel ( iEvent, iSetup );
@@ -241,8 +243,8 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   //fillSCaod  ( iEvent, iSetup );
   //fillSCreco ( iEvent, iSetup );
   fillEB     ( iEvent, iSetup );
-  //fillEE     ( iEvent, iSetup );
-  //fillECALstitched  ( iEvent, iSetup );
+  fillEE     ( iEvent, iSetup );
+  fillECALstitched  ( iEvent, iSetup );
   //fillTracksAtEBEE     ( iEvent, iSetup );
   //fillPhoVars     ( iEvent, iSetup );
   //fillEvtWgt     ( iEvent, iSetup );
