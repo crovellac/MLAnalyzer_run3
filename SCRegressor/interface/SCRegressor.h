@@ -126,7 +126,7 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     edm::EDGetTokenT<LHEEventProduct> lheEventT_;
     edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeomToken_;
 
-    static const int nPhotons = 2;
+    static const int nPhotons = 4;
     //static const int nPhotons = 1;
 
     TProfile2D *hEB_energy;
@@ -148,6 +148,7 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     TTree* RHTree;
 
     unsigned int nPho;
+    unsigned int nEle;
     unsigned long long eventId_;
     unsigned int runId_;
     unsigned int lumiId_;
@@ -196,6 +197,7 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     std::map<unsigned int, std::vector<unsigned int>> mGenPi0_RecoPho;
     std::vector<int> vPreselPhoIdxs_;
     std::vector<int> vRegressPhoIdxs_;
+    std::vector<int> vGenAIdxs_;
     std::vector<float> vIphi_Emax_;
     std::vector<float> vIeta_Emax_;
 

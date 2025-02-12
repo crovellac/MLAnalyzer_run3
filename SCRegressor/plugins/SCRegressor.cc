@@ -121,8 +121,14 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   iEvent.getByToken(EERecHitCollectionT_, EERecHitsH);
   iEvent.getByToken(ESRecHitCollectionT_, ESRecHitsH);
 
-  edm::Handle<PhotonCollection> photons;
-  iEvent.getByToken(photonCollectionT_, photons);
+  //edm::Handle<PhotonCollection> photons;
+  //iEvent.getByToken(photonCollectionT_, photons);
+  edm::Handle<ElectronCollection> electrons;
+  iEvent.getByToken(electronCollectionT_, electrons);
+
+  edm::Handle<reco::GenParticleCollection> genParticles;
+  iEvent.getByToken(genParticleCollectionT_, genParticles);
+
   //edm::Handle<std::vector<reco::Photon>> photons;
   //iEvent.getByLabel("gedPhotons", photons);
   //iEvent.getByToken(photonCollectionT_, photons);
@@ -138,12 +144,12 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   vPreselPhoIdxs_.clear();
   nTotal += nPhotons;
   //hasPassed = runPiSel ( iEvent, iSetup ); //TODO: add config-level switch
-  hasPassed = runPhotonSel ( iEvent, iSetup );
+  //hasPassed = runPhotonSel ( iEvent, iSetup );
   //hasPassed = runDiPhotonSel ( iEvent, iSetup );
   //hasPassed = runZJetsEleSel ( iEvent, iSetup );
   //hasPassed = runZJetsMuSel ( iEvent, iSetup );
   //hasPassed = runNJetsSel ( iEvent, iSetup );
-  //hasPassed = runH2aaSel ( iEvent, iSetup );
+  hasPassed = runH2aaSel ( iEvent, iSetup );
   if ( !hasPassed ) return;
   //runDiPhotonSel ( iEvent, iSetup );
   //runH2aaSel ( iEvent, iSetup );
@@ -152,7 +158,7 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   // Get coordinates of photon supercluster seed
   hNpassed_img->Fill(0.);
-  nPho = 0;
+  nEle = 0;
   int iphi_Emax, ieta_Emax;
   float Emax;
   GlobalPoint pos_Emax;
@@ -161,14 +167,13 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   vIeta_Emax_.clear();
   vRegressPhoIdxs_.clear();
   int iphi_, ieta_; // rows:ieta, cols:iphi
+
   for ( unsigned int iP : vPreselPhoIdxs_ ) {
 
-    PhotonRef iPho( photons, iP );
-    //vRegressPhoIdxs_.push_back( iP );
+    ElectronRef iEle( electrons, iP);
 
-    ///*
     // Get underlying super cluster
-    reco::SuperClusterRef const& iSC = iPho->superCluster();
+    reco::SuperClusterRef const& iSC = iEle->superCluster();
     //EcalRecHitCollection::const_iterator iRHit_( EBRecHitsH->find(iSC->seed()->seed()) );
     //std::cout << "Seed E: " << iRHit_->energy() << std::endl;
     std::vector<std::pair<DetId, float>> const& SCHits( iSC->hitsAndFractions() );
@@ -179,9 +184,8 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     iphi_Emax = -1;
     ieta_Emax = -1;
 
-    // Loop over SC hits of photon
+    // Loop over SC hits of electron
     for(unsigned iH(0); iH != SCHits.size(); ++iH) {
-
       // Get DetId
       if ( SCHits[iH].first.subdetId() != EcalBarrel ) continue;
       EcalRecHitCollection::const_iterator iRHit( EBRecHitsH->find(SCHits[iH].first) );
@@ -203,7 +207,7 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       }
       //std::cout << " >> " << iH << ": iphi_,ieta_,E: " << iphi_ << ", " << ieta_ << ", " << iRHit->energy() << std::endl;
     } // SC hits
-
+    
     // Apply selection on position of shower seed
     //std::cout << " >> Found: iphi_Emax,ieta_Emax: " << iphi_Emax << ", " << ieta_Emax << std::endl;
     if ( Emax <= zs ) continue;
@@ -213,25 +217,25 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     vPos_Emax.push_back( pos_Emax );
     vRegressPhoIdxs_.push_back( iP );
     //std::cout << " >> Found: iphi_Emax,ieta_Emax: " << iphi_Emax << ", " << ieta_Emax << std::endl;
-    //*/
-    nPho++;
+   
+    nEle++;
 
   } // Photons
 
   // Enforce selection
-  if ( debug ) std::cout << " >> nPho: " << nPho << std::endl;
-  if ( nPho == 0 ) return; // Pi/Photon gun selection
+  if ( debug ) std::cout << " >> nEle: " << nEle << std::endl;
+  if ( nEle == 0 ) return; // Pi/Photon gun selection
   //if ( nPho < 1 ) return; // ZJets physics selection
   //if ( nPho != 2 ) return; // Diphoton physics selection
   if ( debug ) std::cout << " >> Passed cropping. " << std::endl;
 
   //fillPiSel ( iEvent, iSetup );
-  fillPhotonSel ( iEvent, iSetup );
+  //fillPhotonSel ( iEvent, iSetup );
   //fillDiPhotonSel ( iEvent, iSetup );
   //fillZJetsEleSel ( iEvent, iSetup );
   //fillZJetsMuSel ( iEvent, iSetup );
   //fillNJetsSel ( iEvent, iSetup );
-  //fillH2aaSel ( iEvent, iSetup );
+  fillH2aaSel ( iEvent, iSetup );
   //fillQCDSel ( iEvent, iSetup );
   fillSC     ( iEvent, iSetup );
   //fillSCaod  ( iEvent, iSetup );
@@ -244,7 +248,7 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   //fillEvtWgt     ( iEvent, iSetup );
 
   //nPassed++;
-  nPassed += nPho;
+  nPassed += nEle;
 
   RHTree->Fill();
   hNpassed_img->Fill(1.);

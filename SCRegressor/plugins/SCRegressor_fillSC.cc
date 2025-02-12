@@ -41,7 +41,7 @@ void SCRegressor::fillSC ( const edm::Event& iEvent, const edm::EventSetup& iSet
   int iphi_, ieta_, idx_; // rows:ieta, cols:iphi
   int iphi_shift, ieta_shift;
   int iphi_crop, ieta_crop;
-  for ( unsigned int iP(0); iP < nPho; iP++ ) {
+  for ( unsigned int iP(0); iP < nEle; iP++ ) {
 
     SC_energy.assign(crop_size*crop_size,0.);
     SC_energyT.assign(crop_size*crop_size,0.);
@@ -50,7 +50,7 @@ void SCRegressor::fillSC ( const edm::Event& iEvent, const edm::EventSetup& iSet
 
     iphi_shift = vIphi_Emax_[iP] - 15;
     ieta_shift = vIeta_Emax_[iP] - 15;
-    if ( debug ) std::cout << " >> Doing pho img: iphi_Emax,ieta_Emax: " << vIphi_Emax_[iP] << ", " << vIeta_Emax_[iP] << std::endl;
+    //if ( debug ) std::cout << " >> Doing pho img: iphi_Emax,ieta_Emax: " << vIphi_Emax_[iP] << ", " << vIeta_Emax_[iP] << std::endl;
 
     for(EcalRecHitCollection::const_iterator iRHit = EBRecHitsH->begin();
         iRHit != EBRecHitsH->end();
