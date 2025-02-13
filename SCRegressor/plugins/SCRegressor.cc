@@ -33,6 +33,7 @@ SCRegressor::SCRegressor(const edm::ParameterSet& iConfig)
   RECOEBRecHitCollectionT_ = consumes<EcalRecHitCollection>(iConfig.getParameter<edm::InputTag>("EBRecHitCollection"));
   RECOEERecHitCollectionT_ = consumes<EcalRecHitCollection>(iConfig.getParameter<edm::InputTag>("EERecHitCollection"));
   RECOESRecHitCollectionT_ = consumes<EcalRecHitCollection>(iConfig.getParameter<edm::InputTag>("ESRecHitCollection"));
+  HBHERecHitCollectionT_  = consumes<HBHERecHitCollection>(iConfig.getParameter<edm::InputTag>("reducedHBHERecHitCollection"));
   genParticleCollectionT_ = consumes<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("genParticleCollection"));
   genJetCollectionT_ = consumes<reco::GenJetCollection>(iConfig.getParameter<edm::InputTag>("genJetCollection"));
   //trackCollectionT_ = consumes<reco::TrackCollection>(iConfig.getParameter<edm::InputTag>("trackCollection"));
@@ -70,6 +71,7 @@ SCRegressor::SCRegressor(const edm::ParameterSet& iConfig)
   branchesEB     ( RHTree, fs );
   branchesEE     ( RHTree, fs );
   branchesECALstitched ( RHTree, fs ); 
+  branchesHBHE   ( RHTree, fs );
   //branchesTracksAtEBEE     ( RHTree, fs );
   //branchesPhoVars     ( RHTree, fs );
   //branchesEvtWgt     ( RHTree, fs );
@@ -245,6 +247,7 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   fillEB     ( iEvent, iSetup );
   fillEE     ( iEvent, iSetup );
   fillECALstitched  ( iEvent, iSetup );
+  fillHBHE   ( iEvent, iSetup );
   //fillTracksAtEBEE     ( iEvent, iSetup );
   //fillPhoVars     ( iEvent, iSetup );
   //fillEvtWgt     ( iEvent, iSetup );

@@ -112,6 +112,7 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> EBRecHitCollectionT_;
     edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> EERecHitCollectionT_;
     edm::EDGetTokenT<edm::SortedCollection<EcalRecHit>> ESRecHitCollectionT_;
+    edm::EDGetTokenT<edm::SortedCollection<HBHERecHit>> HBHERecHitCollectionT_;
 
     edm::EDGetTokenT<EcalRecHitCollection> AODEBRecHitCollectionT_;
     edm::EDGetTokenT<EcalRecHitCollection> AODEERecHitCollectionT_;
@@ -143,6 +144,11 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     TH2F *hEvt_EE_energy[nEE];
     TProfile2D *hECAL_energy;
     std::vector<float> vECAL_energy_;
+    TH2F *hEvt_HBHE_energy;
+    TProfile2D *hHBHE_energy_EB;
+    TProfile2D *hHBHE_energy;
+    std::vector<float> vHBHE_energy_EB_;
+    std::vector<float> vHBHE_energy_;
 
     //TH1D * histo;
     TProfile2D * hSC_energy;
@@ -170,6 +176,7 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     void branchesEE ( TTree*, edm::Service<TFileService>& );
     void branchesECALstitched ( TTree*, edm::Service<TFileService>& );
     void branchesTracksAtEBEE ( TTree*, edm::Service<TFileService>& );
+    void branchesHBHE ( TTree*, edm::Service<TFileService>& );
     //void branchesPhoVars ( TTree*, edm::Service<TFileService>& );
     void branchesEvtWgt ( TTree*, edm::Service<TFileService>& );
 
@@ -180,6 +187,7 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     void fillEE     ( const edm::Event&, const edm::EventSetup& );
     void fillECALstitched     ( const edm::Event&, const edm::EventSetup& );
     void fillTracksAtEBEE ( const edm::Event&, const edm::EventSetup& );
+    void fillHBHE   ( const edm::Event&, const edm::EventSetup& );
     //void fillPhoVars ( const edm::Event&, const edm::EventSetup& );
     void fillEvtWgt ( const edm::Event&, const edm::EventSetup& );
 

@@ -40,8 +40,8 @@ print (" >> Loaded",len(options.inputFiles),"input files from list.")
 process.source = cms.Source("PoolSource",
     # replace 'myfile.root' with the source file you want to use
     fileNames = cms.untracked.vstring(
-      #options.inputFiles
-      'file:miniAOD_HToEleEle.root'
+      options.inputFiles
+      #'file:miniAOD_HToEleEle.root'
       )
     , skipEvents = cms.untracked.uint32(options.skipEvents)
     #, eventsToProcess = cms.untracked.VEventRange('1:6931:1723687928','1:6932:1723895372')
@@ -76,6 +76,7 @@ process.fevt = cms.EDAnalyzer('SCRegressor'
     , reducedEBRecHitCollection = cms.InputTag('reducedEgamma:reducedEBRecHits')
     , reducedEERecHitCollection = cms.InputTag('reducedEgamma:reducedEERecHits')
     , reducedESRecHitCollection = cms.InputTag('reducedEgamma:reducedESRecHits')
+    , reducedHBHERecHitCollection    = cms.InputTag('reducedEgamma:reducedHBHEHits')
     , genParticleCollection = cms.InputTag('prunedGenParticles')
     #, genParticleCollection = cms.InputTag('prunedGenParticles')
     , genJetCollection = cms.InputTag('ak4GenJets')
