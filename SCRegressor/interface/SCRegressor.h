@@ -36,6 +36,25 @@
 #include "DataFormats/PatCandidates/interface/IsolatedTrack.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 
+#include "DataFormats/SiPixelDetId/interface/PXBDetId.h"
+#include "DataFormats/SiPixelDetId/interface/PXFDetId.h" // new
+#include "DataFormats/SiStripDetId/interface/SiStripDetId.h"
+#include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
+#include "DataFormats/SiStripDetId/interface/StripSubdetector.h"
+#include "DataFormats/HLTReco/interface/TriggerObject.h"
+#include "DataFormats/HLTReco/interface/TriggerEvent.h"
+#include "DataFormats/Common/interface/ValueMap.h"
+
+#include "DataFormats/TrackerRecHit2D/interface/SiPixelRecHit.h"
+#include "DataFormats/TrackerRecHit2D/interface/SiStripRecHit2D.h"
+#include "DataFormats/TrackerRecHit2D/interface/SiPixelRecHitCollection.h"
+#include "DataFormats/TrackerRecHit2D/interface/SiStripMatchedRecHit2DCollection.h"
+#include "DataFormats/TrackerRecHit2D/interface/SiStripRecHit2DCollection.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "DataFormats/Candidate/interface/VertexCompositePtrCandidate.h"
+#include "DataFormats/GeometryCommonDetAlgo/interface/Measurement1D.h"
+
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/Common/interface/TriggerNames.h"
@@ -52,6 +71,7 @@
 #include "TStyle.h"
 #include "TMath.h"
 #include "TProfile2D.h"
+#include "TVector3.h"
 
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
@@ -62,8 +82,24 @@
 #include "Calibration/IsolatedParticles/interface/DetIdFromEtaPhi.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
 
+
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
+
+#include "Geometry/CaloTopology/interface/EcalBarrelTopology.h"
+#include "Geometry/CaloGeometry/interface/CaloGeometry.h"
+#include "Geometry/CaloGeometry/interface/CaloCellGeometry.h"
+#include "Geometry/Records/interface/CaloGeometryRecord.h"
+#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
+#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
+#include "Geometry/CommonTopologies/interface/StripTopology.h"
+#include "Geometry/TrackerGeometryBuilder/interface/StripGeomDetUnit.h"
+#include "Geometry/TrackerGeometryBuilder/interface/StripGeomDetType.h"
+#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
+#include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
+#include "Geometry/CommonDetUnit/interface/PixelGeomDetUnit.h"// new
+#include "Geometry/CommonDetUnit/interface/PixelGeomDetType.h"// new
+
 
 #include "DQM/SiPixelMonitorRecHit/interface/SiPixelRecHitModule.h"
 #include "DQM/HcalCommon/interface/Constants.h"
@@ -84,6 +120,7 @@
 
 #include "Calibration/IsolatedParticles/interface/DetIdFromEtaPhi.h"
 #include "Calibration/IsolatedParticles/interface/CaloPropagateTrack.h"//!! header present
+
 
 //
 // class declaration
@@ -158,9 +195,26 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     edm::ESInputTag transientTrackBuilderT_;
     edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> transTrackBToken_;
     edm::EDGetTokenT<reco::VertexCollection> vertexCollectionT_;
+    edm::EDGetTokenT<edm::View<reco::Candidate> > pfCandidatesToken_;
+    edm::EDGetTokenT<reco::VertexCompositePtrCandidateCollection> secVertexCollectionT_;
+
+    edm::EDGetTokenT<SiPixelRecHitCollection> siPixelRecHitCollectionT_;
+    edm::EDGetTokenT<SiStripMatchedRecHit2DCollection> siStripMatchedRecHitCollectionT_;
+    edm::EDGetTokenT<SiStripRecHit2DCollection> siStripRPhiRecHitCollectionT_;
+    edm::EDGetTokenT<SiStripRecHit2DCollection> siStripUnmatchedRPhiRecHitCollectionT_;
+    edm::EDGetTokenT<SiStripRecHit2DCollection> siStripStereoRecHitCollectionT_;
+    edm::EDGetTokenT<SiStripRecHit2DCollection> siStripUnmatchedStereoRecHitCollectionT_;
+
+    edm::ESGetToken<TrackerTopology, TrackerTopologyRcd> tTopoToken_;
+    edm::ESGetToken<TrackerGeometry, TrackerDigiGeometryRecord> tkGeomToken_;
+
+    typedef std::vector<reco::PFCandidate>  PFCollection;
+    edm::EDGetTokenT<PFCollection> pfCollectionT_;
 
     static const int nEE = 2;
     static const int nElectrons = 4;
+
+    double z0PVCut_;
 
     TProfile2D *hEB_energy;
     TProfile2D *hEB_time;
@@ -209,6 +263,11 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     void branchesHBHE ( TTree*, edm::Service<TFileService>& );
     //void branchesPhoVars ( TTree*, edm::Service<TFileService>& );
     void branchesEvtWgt ( TTree*, edm::Service<TFileService>& );
+    void branchesPFCandsAtEBEE ( TTree*, edm::Service<TFileService>& );
+    void branchesPFCandsAtECALstitched   ( TTree*, edm::Service<TFileService>& );
+    void branchesTRKlayersAtECALstitched( TTree*, edm::Service<TFileService>& );
+    void branchesHCALatEBEE     ( TTree*, edm::Service<TFileService>& ); 
+    void branchesECALatHCAL  ( TTree*, edm::Service<TFileService>& );
 
     void fillSC     ( const edm::Event&, const edm::EventSetup& );
     void fillSCaod  ( const edm::Event&, const edm::EventSetup& );
@@ -222,6 +281,9 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     void fillHBHE   ( const edm::Event&, const edm::EventSetup& );
     //void fillPhoVars ( const edm::Event&, const edm::EventSetup& );
     void fillEvtWgt ( const edm::Event&, const edm::EventSetup& );
+    void fillPFCandsAtEBEE   ( const edm::Event&, const edm::EventSetup& );
+    void fillPFCandsAtECALstitched   ( const edm::Event&, const edm::EventSetup& ); 
+    
 
     void branchesPiSel       ( TTree*, edm::Service<TFileService>& );
     void branchesPhotonSel   ( TTree*, edm::Service<TFileService>& );
@@ -249,6 +311,16 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     void fillQCDSel     ( const edm::Event&, const edm::EventSetup& );
     void fillECAL_with_EEproj ( TH2F*, int, int );
     void fillTracksAtECAL_with_EEproj ( int side, int ieta_global_offset, int ieta_signed_offset, int proj );
+    void fillTRKlayersAtECALstitched( const edm::Event&, const edm::EventSetup&, unsigned int proj );
+    void fillECALatHCAL     ( const edm::Event&, const edm::EventSetup& );
+    void fillHCALatEBEE     ( const edm::Event&, const edm::EventSetup& );
+
+    const reco::PFCandidate* getPFCand(edm::Handle<PFCollection> pfCands, float eta, float phi, float& minDr, bool debug_ = false);
+    const reco::Track* getTrackCand(edm::Handle<reco::TrackCollection> trackCands, float eta, float phi, float& minDr, bool debug_ = false);
+    int   getTruthLabel(const reco::PFJetRef& recJet, edm::Handle<reco::GenParticleCollection> genParticles, float dRMatch = 0.4, bool debug_ = false);
+    float getBTaggingValue(const reco::PFJetRef& recJet, edm::Handle<edm::View<reco::Jet> >& recoJetCollection, edm::Handle<reco::JetTagCollection>& btagCollection, float dRMatch = 0.1, bool debug_= false );
+
+    unsigned int getLayer(const DetId& detid, const TrackerTopology* tTopo);
 
     std::map<unsigned int, std::vector<unsigned int>> mGenPi0_RecoPho;
     std::vector<int> vPreselPhoIdxs_;
@@ -413,6 +485,14 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 //
 // constants, enums and typedefs
 //
+static const int nEE = 2;
+static const int nTOB = 6;
+static const int nTEC = 9;
+static const int nTIB = 4;
+static const int nTID = 3;
+static const int nBPIX = 4;
+static const int nFPIX = 6;
+
 static const float zs = 0.;
 
 static const int crop_size = 32;

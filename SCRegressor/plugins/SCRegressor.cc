@@ -38,6 +38,21 @@ SCRegressor::SCRegressor(const edm::ParameterSet& iConfig)
   genParticleCollectionT_ = consumes<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("genParticleCollection"));
   genJetCollectionT_ = consumes<reco::GenJetCollection>(iConfig.getParameter<edm::InputTag>("genJetCollection"));
   trackCollectionT_ = consumes<reco::TrackCollection>(iConfig.getParameter<edm::InputTag>("trackCollection"));
+  pfCollectionT_          = consumes<PFCollection>(iConfig.getParameter<edm::InputTag>("pfCollection"));
+
+  pfCandidatesToken_      = consumes<edm::View<reco::Candidate> >(iConfig.getParameter<edm::InputTag>("srcPFCandidates"));
+  vertexCollectionT_      = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertexCollection"));
+  secVertexCollectionT_   = consumes<reco::VertexCompositePtrCandidateCollection>(iConfig.getParameter<edm::InputTag>("secVertexCollection"));
+  siPixelRecHitCollectionT_ = consumes<SiPixelRecHitCollection>(iConfig.getParameter<edm::InputTag>("siPixelRecHitCollection"));
+  siStripMatchedRecHitCollectionT_ = consumes<SiStripMatchedRecHit2DCollection>(iConfig.getParameter<edm::InputTag>("siStripMatchedRecHitCollection"));
+  siStripRPhiRecHitCollectionT_    = consumes<SiStripRecHit2DCollection>(iConfig.getParameter<edm::InputTag>("siStripRphiRecHits"));
+  siStripUnmatchedRPhiRecHitCollectionT_ = consumes<SiStripRecHit2DCollection>(iConfig.getParameter<edm::InputTag>("siStripUnmatchedRphiRecHits"));
+  siStripStereoRecHitCollectionT_  = consumes<SiStripRecHit2DCollection>(iConfig.getParameter<edm::InputTag>("siStripStereoRecHits"));
+  siStripUnmatchedStereoRecHitCollectionT_  = consumes<SiStripRecHit2DCollection>(iConfig.getParameter<edm::InputTag>("siStripUnmatchedStereoRecHits"));
+
+  tTopoToken_ = esConsumes<TrackerTopology, TrackerTopologyRcd>();
+  tkGeomToken_ = esConsumes<TrackerGeometry, TrackerDigiGeometryRecord>();
+
   //trackCollectionT_ = consumes<pat::IsolatedTrackCollection>(iConfig.getParameter<edm::InputTag>("trackCollection"));
   rhoLabel_ = consumes<double>(iConfig.getParameter<edm::InputTag>("rhoLabel"));
   trgResultsT_ = consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("trgResults"));
@@ -47,8 +62,8 @@ SCRegressor::SCRegressor(const edm::ParameterSet& iConfig)
   magfieldToken_ = esConsumes<MagneticField, IdealMagneticFieldRecord>();
   transientTrackBuilderT_ = iConfig.getParameter<edm::ESInputTag>("transTrackBuilder");
   transTrackBToken_ = esConsumes<TransientTrackBuilder, TransientTrackRecord>(transientTrackBuilderT_) ;
-  vertexCollectionT_      = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertexCollection"));
   std::vector<edm::InputTag> srcLeptonsTags        = iConfig.getParameter< std::vector<edm::InputTag> >("srcLeptons");
+  z0PVCut_   = iConfig.getParameter<double>("z0PVCut");
   //now do what ever initialization is needed
   usesResource("TFileService");
   edm::Service<TFileService> fs;
@@ -75,10 +90,15 @@ SCRegressor::SCRegressor(const edm::ParameterSet& iConfig)
   //branchesSCreco ( RHTree, fs );
   branchesEB     ( RHTree, fs );
   branchesEE     ( RHTree, fs );
+  branchesHCALatEBEE   ( RHTree, fs );
   branchesECALstitched ( RHTree, fs ); 
   branchesHBHE   ( RHTree, fs );
+  branchesECALatHCAL   ( RHTree, fs );
   branchesTracksAtEBEE     ( RHTree, fs );
   branchesTracksAtECALstitched( RHTree, fs);
+  branchesPFCandsAtEBEE ( RHTree, fs);
+  branchesPFCandsAtECALstitched( RHTree, fs);
+  branchesTRKlayersAtECALstitched(RHTree, fs);
   //branchesPhoVars     ( RHTree, fs );
   //branchesEvtWgt     ( RHTree, fs );
 
@@ -254,15 +274,23 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   //fillSCreco ( iEvent, iSetup );
   fillEB     ( iEvent, iSetup );
   fillEE     ( iEvent, iSetup );
-  fillECALstitched  ( iEvent, iSetup );
   fillHBHE   ( iEvent, iSetup );
+  fillECALatHCAL( iEvent, iSetup );
+  fillECALstitched  ( iEvent, iSetup );
+  fillHCALatEBEE( iEvent, iSetup );
   fillTracksAtEBEE     ( iEvent, iSetup );
   for (unsigned int i=0;i<Nproj;i++)
   {
     fillTracksAtECALstitched( iEvent, iSetup, i );
   }
+  fillPFCandsAtEBEE( iEvent, iSetup );
+  fillPFCandsAtECALstitched( iEvent, iSetup );
   //fillPhoVars     ( iEvent, iSetup );
   //fillEvtWgt     ( iEvent, iSetup );
+  for (unsigned int i=0;i<Nhitproj;i++)
+  {
+    fillTRKlayersAtECALstitched( iEvent, iSetup, i );
+  }
 
   //nPassed++;
   nPassed += nEle;

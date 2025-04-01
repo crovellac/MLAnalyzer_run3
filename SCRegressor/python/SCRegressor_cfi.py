@@ -40,9 +40,19 @@ fevt = cms.EDAnalyzer('SCRegressor'
     , siStripUnmatchedStereoRecHits  = cms.InputTag("siStripMatchedRecHits", "stereoRecHitUnmatched")
     , pfCollection                   = cms.InputTag("particleFlow")
     , srcPFCandidates                = cms.InputTag("particleFlow")
+    , recoJetsForBTagging            = cms.InputTag("ak4PFJetsCHS")
+    , jetTagCollection               = cms.InputTag("pfCombinedInclusiveSecondaryVertexV2BJetTags")
+
     , transTrackBuilder              = cms.ESInputTag("", "TransientTrackBuilder")
     , srcLeptons                     = cms.VInputTag("gedGsfElectrons","muons","gedPhotons")
     , rhoLabel = cms.InputTag("fixedGridRhoFastjetAll")
+    
+    # Jet level cfg
+    , nJets     = cms.int32(-1)
+    , minJetPt  = cms.double(20.)
+    , maxJetEta = cms.double(2.4)
+    , z0PVCut   = cms.double(0.1)
+
     , trgResults = cms.InputTag("TriggerResults","","HLT")
     , generator = cms.InputTag("generator")
     , lhe = cms.InputTag("lhe")
