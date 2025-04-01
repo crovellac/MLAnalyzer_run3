@@ -37,8 +37,11 @@ bool SCRegressor::runH2aaSel ( const edm::Event& iEvent, const edm::EventSetup& 
   edm::Handle<reco::GenParticleCollection> genParticles;
   iEvent.getByToken(genParticleCollectionT_, genParticles);
 
-  edm::Handle<ElectronCollection> electrons;
-  iEvent.getByToken(electronCollectionT_, electrons);  
+  //edm::Handle<ElectronCollection> electrons;
+  //iEvent.getByToken(electronCollectionT_, electrons);  
+  edm::Handle<reco::GsfElectronCollection> electrons;    //TODO
+  iEvent.getByToken(electronCollectionT_, electrons);
+ 
 
   vAs.clear();
   vGenEleIdxs.clear();
@@ -81,8 +84,8 @@ bool SCRegressor::runH2aaSel ( const edm::Event& iEvent, const edm::EventSetup& 
     minDR = 100.;
     minDR_idx = -1;
     for ( unsigned int iP = 0; iP < electrons->size(); iP++ ) {
-      ElectronRef iRecoEle( electrons, iP );
-
+      //ElectronRef iRecoEle( electrons, iP );
+      reco::GsfElectronRef iRecoEle( electrons, iP );
       double dR = reco::deltaR( iRecoEle->eta(),iRecoEle->phi(), iGenEle->eta(),iGenEle->phi() );
       //std::cout << "dR: " << dR << std::endl;
       if ( dR > minDR ) continue;
@@ -116,7 +119,8 @@ void SCRegressor::fillH2aaSel ( const edm::Event& iEvent, const edm::EventSetup&
   edm::Handle<reco::GenParticleCollection> genParticles;
   iEvent.getByToken(genParticleCollectionT_, genParticles);
 
-  edm::Handle<ElectronCollection> electrons;
+  //edm::Handle<ElectronCollection> electrons;
+  edm::Handle<reco::GsfElectronCollection> electrons;  
   iEvent.getByToken(electronCollectionT_, electrons);
 
 

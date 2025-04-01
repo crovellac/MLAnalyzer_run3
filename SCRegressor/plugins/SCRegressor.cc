@@ -10,7 +10,6 @@
 //
 
 #include "MLAnalyzer_run3/SCRegressor/interface/SCRegressor.h"
-//#include "MLAnalyzer_run3/SCRegressor/interface/RecHitAnalyzer.h"
 
 //
 // constructors and destructor
@@ -21,7 +20,9 @@ SCRegressor::SCRegressor(const edm::ParameterSet& iConfig)
   //electronCollectionT_ = consumes<edm::View<reco::GsfElectron>>(iConfig.getParameter<edm::InputTag>("gsfElectronCollection"));
   //electronCollectionT_ = consumes<reco::GsfElectronCollection>(iConfig.getParameter<edm::InputTag>("gsfElectronCollection"));
   muonCollectionT_ = consumes<MuonCollection>(iConfig.getParameter<edm::InputTag>("muonCollection"));
-  electronCollectionT_ = consumes<ElectronCollection>(iConfig.getParameter<edm::InputTag>("electronCollection"));
+  //electronCollectionT_ = consumes<ElectronCollection>(iConfig.getParameter<edm::InputTag>("electronCollection"));
+  //electronCollectionT_ = consumes<reco::GsfElectronCollection>(iConfig.getParameter<edm::InputTag>("electronCollection"));
+  electronCollectionT_           = consumes<reco::GsfElectronCollection>(iConfig.getParameter<edm::InputTag>("gsfElectronCollection"));
   photonCollectionT_ = consumes<PhotonCollection>(iConfig.getParameter<edm::InputTag>("photonCollection"));
   jetCollectionT_ = consumes<JetCollection>(iConfig.getParameter<edm::InputTag>("jetCollection"));
   EBRecHitCollectionT_    = consumes<EcalRecHitCollection>(iConfig.getParameter<edm::InputTag>("reducedEBRecHitCollection"));
@@ -36,14 +37,18 @@ SCRegressor::SCRegressor(const edm::ParameterSet& iConfig)
   HBHERecHitCollectionT_  = consumes<HBHERecHitCollection>(iConfig.getParameter<edm::InputTag>("reducedHBHERecHitCollection"));
   genParticleCollectionT_ = consumes<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("genParticleCollection"));
   genJetCollectionT_ = consumes<reco::GenJetCollection>(iConfig.getParameter<edm::InputTag>("genJetCollection"));
-  //trackCollectionT_ = consumes<reco::TrackCollection>(iConfig.getParameter<edm::InputTag>("trackCollection"));
-  trackCollectionT_ = consumes<pat::IsolatedTrackCollection>(iConfig.getParameter<edm::InputTag>("trackCollection"));
+  trackCollectionT_ = consumes<reco::TrackCollection>(iConfig.getParameter<edm::InputTag>("trackCollection"));
+  //trackCollectionT_ = consumes<pat::IsolatedTrackCollection>(iConfig.getParameter<edm::InputTag>("trackCollection"));
   rhoLabel_ = consumes<double>(iConfig.getParameter<edm::InputTag>("rhoLabel"));
   trgResultsT_ = consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("trgResults"));
   genInfoT_ = consumes<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("generator"));
   lheEventT_ = consumes<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lhe"));
   caloGeomToken_ = esConsumes<CaloGeometry, CaloGeometryRecord>();
-
+  magfieldToken_ = esConsumes<MagneticField, IdealMagneticFieldRecord>();
+  transientTrackBuilderT_ = iConfig.getParameter<edm::ESInputTag>("transTrackBuilder");
+  transTrackBToken_ = esConsumes<TransientTrackBuilder, TransientTrackRecord>(transientTrackBuilderT_) ;
+  vertexCollectionT_      = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertexCollection"));
+  std::vector<edm::InputTag> srcLeptonsTags        = iConfig.getParameter< std::vector<edm::InputTag> >("srcLeptons");
   //now do what ever initialization is needed
   usesResource("TFileService");
   edm::Service<TFileService> fs;
@@ -58,12 +63,12 @@ SCRegressor::SCRegressor(const edm::ParameterSet& iConfig)
   RHTree->Branch("SC_ieta", &vIeta_Emax_);
 
   //branchesPiSel ( RHTree, fs );
-  branchesPhotonSel ( RHTree, fs );
+  //branchesPhotonSel ( RHTree, fs );
   //branchesDiPhotonSel ( RHTree, fs );
   //branchesZJetsEleSel ( RHTree, fs );
   //branchesZJetsMuSel ( RHTree, fs );
   //branchesNJetsSel ( RHTree, fs );
-  //branchesH2aaSel ( RHTree, fs );
+  branchesH2aaSel ( RHTree, fs );
   //branchesQCDSel ( RHTree, fs );
   branchesSC     ( RHTree, fs );
   //branchesSCaod  ( RHTree, fs );
@@ -72,7 +77,8 @@ SCRegressor::SCRegressor(const edm::ParameterSet& iConfig)
   branchesEE     ( RHTree, fs );
   branchesECALstitched ( RHTree, fs ); 
   branchesHBHE   ( RHTree, fs );
-  //branchesTracksAtEBEE     ( RHTree, fs );
+  branchesTracksAtEBEE     ( RHTree, fs );
+  branchesTracksAtECALstitched( RHTree, fs);
   //branchesPhoVars     ( RHTree, fs );
   //branchesEvtWgt     ( RHTree, fs );
 
@@ -127,7 +133,8 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   //edm::Handle<PhotonCollection> photons;
   //iEvent.getByToken(photonCollectionT_, photons);
-  edm::Handle<ElectronCollection> electrons;
+  //edm::Handle<ElectronCollection> electrons;
+  edm::Handle<reco::GsfElectronCollection> electrons;    //TODO
   iEvent.getByToken(electronCollectionT_, electrons);
 
   edm::Handle<reco::GenParticleCollection> genParticles;
@@ -140,6 +147,7 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   // Provides access to global cell position and coordinates below
   //edm::ESHandle<CaloGeometry> caloGeomH;
   //iSetup.get<CaloGeometryRecord>().get(caloGeomH);
+  
   auto caloGeomH = iSetup.getHandle(caloGeomToken_);
   const CaloGeometry* caloGeom = caloGeomH.product();
 
@@ -174,8 +182,8 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   for ( unsigned int iP : vPreselPhoIdxs_ ) {
 
-    ElectronRef iEle( electrons, iP);
-
+    //ElectronRef iEle( electrons, iP);
+    reco::GsfElectronRef iEle( electrons, iP ); 
     // Get underlying super cluster
     reco::SuperClusterRef const& iSC = iEle->superCluster();
     //EcalRecHitCollection::const_iterator iRHit_( EBRecHitsH->find(iSC->seed()->seed()) );
@@ -248,7 +256,11 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   fillEE     ( iEvent, iSetup );
   fillECALstitched  ( iEvent, iSetup );
   fillHBHE   ( iEvent, iSetup );
-  //fillTracksAtEBEE     ( iEvent, iSetup );
+  fillTracksAtEBEE     ( iEvent, iSetup );
+  for (unsigned int i=0;i<Nproj;i++)
+  {
+    fillTracksAtECALstitched( iEvent, iSetup, i );
+  }
   //fillPhoVars     ( iEvent, iSetup );
   //fillEvtWgt     ( iEvent, iSetup );
 

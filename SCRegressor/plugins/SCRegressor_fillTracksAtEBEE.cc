@@ -49,12 +49,12 @@ void SCRegressor::branchesTracksAtEBEE ( TTree* tree, edm::Service<TFileService>
 
 // Fill TRK rechits at EB/EE ______________________________________________________________//
 void SCRegressor::fillTracksAtEBEE ( const edm::Event& iEvent, const edm::EventSetup& iSetup ) {
-
+ 
   //int ix_, iy_, iz_;
   int iphi_, ieta_, idx_; // rows:ieta, cols:iphi
   float eta, phi;
   GlobalPoint pos;
-
+  //std::cout << "EBDetId::kSizeForDenseIndexing: " << EBDetId::kSizeForDenseIndexing << std::endl;
   vTracks_EB_.assign( EBDetId::kSizeForDenseIndexing, 0. );
   vTracksPt_EB_.assign( EBDetId::kSizeForDenseIndexing, 0. );
   vTracksQPt_EB_.assign( EBDetId::kSizeForDenseIndexing, 0. );
@@ -65,9 +65,8 @@ void SCRegressor::fillTracksAtEBEE ( const edm::Event& iEvent, const edm::EventS
     vTracksQPt_EE_[iz].assign( EE_NC_PER_ZSIDE, 0. );
   }
   */
-
-  //edm::Handle<reco::TrackCollection> tracksH_;
-  edm::Handle<pat::IsolatedTrackCollection> tracksH_;
+  edm::Handle<reco::TrackCollection> tracksH_;
+  //edm::Handle<pat::IsolatedTrackCollection> tracksH_;
   iEvent.getByToken( trackCollectionT_, tracksH_ );
 
   // Provides access to global cell position
@@ -77,14 +76,14 @@ void SCRegressor::fillTracksAtEBEE ( const edm::Event& iEvent, const edm::EventS
   const CaloGeometry* caloGeom = caloGeomH.product();
 
   //reco::Track::TrackQuality tkQt_ = reco::Track::qualityByName("highPurity");
-
-  //for ( reco::TrackCollection::const_iterator iTk = tracksH_->begin();
-  for ( pat::IsolatedTrackCollection::const_iterator iTk = tracksH_->begin();
+  for ( reco::TrackCollection::const_iterator iTk = tracksH_->begin();
+  //for ( pat::IsolatedTrackCollection::const_iterator iTk = tracksH_->begin();
         iTk != tracksH_->end(); ++iTk ) {
     //if ( !(iTk->quality(tkQt_)) ) continue;
 
     eta = iTk->eta();
     phi = iTk->phi();
+    std::cout << "eta: " << eta <<", phi: " << phi << std::endl;
     //if ( std::abs(eta) > 3. ) continue;
     if ( std::abs(eta) > 1.5 ) continue;
 

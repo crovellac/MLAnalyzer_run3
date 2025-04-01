@@ -57,6 +57,8 @@
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "Calibration/IsolatedParticles/interface/DetIdFromEtaPhi.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
 
@@ -65,6 +67,24 @@
 
 #include "DQM/SiPixelMonitorRecHit/interface/SiPixelRecHitModule.h"
 #include "DQM/HcalCommon/interface/Constants.h"
+
+#include "MagneticField/Engine/interface/MagneticField.h"
+#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
+
+#include "RecoTracker/TransientTrackingRecHit/interface/TSiStripRecHit2DLocalPos.h"
+#include "TrackingTools/Records/interface/TransientTrackRecord.h"
+#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
+#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
+#include "TrackingTools/Records/interface/TrackingComponentsRecord.h"
+#include "TrackingTools/TrajectoryState/interface/TrajectoryStateClosestToPoint.h"
+
+#include "RecoVertex/VertexTools/interface/VertexDistanceXY.h"
+#include "RecoVertex/VertexTools/interface/VertexDistance3D.h"
+
+
+#include "Calibration/IsolatedParticles/interface/DetIdFromEtaPhi.h"
+#include "Calibration/IsolatedParticles/interface/CaloPropagateTrack.h"//!! header present
+
 //
 // class declaration
 //
@@ -78,6 +98,10 @@ using pat::PhotonCollection;
 using pat::PhotonRef;
 //using reco::PhotonCollection;
 //using reco::PhotonRef;
+
+static const unsigned int Nproj = 1;
+static const unsigned int Nhitproj = 1;
+static const unsigned int Nadjproj = 2;
 
 // If the analyzer does not use TFileService, please remove
 // the template argument to the base class so the class inherits
@@ -101,7 +125,8 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     // ----------member data ---------------------------
     //edm::EDGetTokenT<edm::View<reco::GsfElectron>> electronCollectionT_;
     //edm::EDGetTokenT<reco::GsfElectronCollection> electronCollectionT_;
-    edm::EDGetTokenT<ElectronCollection> electronCollectionT_;
+    //edm::EDGetTokenT<ElectronCollection> electronCollectionT_;
+    edm::EDGetTokenT<reco::GsfElectronCollection> electronCollectionT_;
     edm::EDGetTokenT<MuonCollection> muonCollectionT_;
     edm::EDGetTokenT<PhotonCollection> photonCollectionT_;
     //edm::EDGetTokenT<std::vector<reco::Photon>> photonCollectionT_;
@@ -122,13 +147,17 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     edm::EDGetTokenT<EcalRecHitCollection> RECOESRecHitCollectionT_;
     edm::EDGetTokenT<reco::GenParticleCollection> genParticleCollectionT_;
     edm::EDGetTokenT<reco::GenJetCollection> genJetCollectionT_;
-    //edm::EDGetTokenT<reco::TrackCollection> trackCollectionT_;
-    edm::EDGetTokenT<pat::IsolatedTrackCollection> trackCollectionT_;
+    edm::EDGetTokenT<reco::TrackCollection> trackCollectionT_;
+    //edm::EDGetTokenT<pat::IsolatedTrackCollection> trackCollectionT_;
     edm::EDGetTokenT<double> rhoLabel_;
     edm::EDGetTokenT<edm::TriggerResults> trgResultsT_;
     edm::EDGetTokenT<GenEventInfoProduct> genInfoT_;
     edm::EDGetTokenT<LHEEventProduct> lheEventT_;
     edm::ESGetToken<CaloGeometry, CaloGeometryRecord> caloGeomToken_;
+    edm::ESGetToken<MagneticField, IdealMagneticFieldRecord> magfieldToken_;
+    edm::ESInputTag transientTrackBuilderT_;
+    edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> transTrackBToken_;
+    edm::EDGetTokenT<reco::VertexCollection> vertexCollectionT_;
 
     static const int nEE = 2;
     static const int nElectrons = 4;
@@ -176,6 +205,7 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     void branchesEE ( TTree*, edm::Service<TFileService>& );
     void branchesECALstitched ( TTree*, edm::Service<TFileService>& );
     void branchesTracksAtEBEE ( TTree*, edm::Service<TFileService>& );
+    void branchesTracksAtECALstitched   ( TTree*, edm::Service<TFileService>& );
     void branchesHBHE ( TTree*, edm::Service<TFileService>& );
     //void branchesPhoVars ( TTree*, edm::Service<TFileService>& );
     void branchesEvtWgt ( TTree*, edm::Service<TFileService>& );
@@ -187,6 +217,8 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     void fillEE     ( const edm::Event&, const edm::EventSetup& );
     void fillECALstitched     ( const edm::Event&, const edm::EventSetup& );
     void fillTracksAtEBEE ( const edm::Event&, const edm::EventSetup& );
+    void fillTracksAtECALstitched ( const edm::Event&, const edm::EventSetup&, unsigned int proj );    
+
     void fillHBHE   ( const edm::Event&, const edm::EventSetup& );
     //void fillPhoVars ( const edm::Event&, const edm::EventSetup& );
     void fillEvtWgt ( const edm::Event&, const edm::EventSetup& );
@@ -216,6 +248,7 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     void fillH2aaSel     ( const edm::Event&, const edm::EventSetup& );
     void fillQCDSel     ( const edm::Event&, const edm::EventSetup& );
     void fillECAL_with_EEproj ( TH2F*, int, int );
+    void fillTracksAtECAL_with_EEproj ( int side, int ieta_global_offset, int ieta_signed_offset, int proj );
 
     std::map<unsigned int, std::vector<unsigned int>> mGenPi0_RecoPho;
     std::vector<int> vPreselPhoIdxs_;
@@ -331,6 +364,42 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     TH1F * hMinDRgenRecoPho;
     TH1F * hMinDRrecoPtoGenPt;
     TH1F * hJetNeuM;
+    
+    //Used for tracks
+    TH2F *hEvt_EE_tracks[nEE];
+    TH2F *hEvt_EE_tracksPt[nEE];
+    TH2F *hEvt_EE_tracksQPt[nEE];
+    TH2F *hEvt_EE_tracksD0[nEE];
+    TH2F *hEvt_EE_tracksD0Sig[nEE];
+    TH2F *hEvt_EE_tracksDz[nEE];
+    TH2F *hEvt_EE_tracksDzSig[nEE];
+    TH2F *hEvt_EE_tracksPt_max[nEE];
+    TH2F *hEvt_EE_tracksD0_max[nEE];
+    TH2F *hEvt_EE_tracksD0Sig_max[nEE];
+    TH2F *hEvt_EE_tracksDz_max[nEE];
+    TH2F *hEvt_EE_tracksDzSig_max[nEE];
+
+    TProfile2D *hECAL_tracks[Nproj];
+    TProfile2D *hECAL_tracksPt[Nproj];
+    TProfile2D *hECAL_tracksQPt[Nproj];
+    TProfile2D *hECAL_tracksD0[Nproj];
+    TProfile2D *hECAL_tracksD0Sig[Nproj];
+    TProfile2D *hECAL_tracksDz[Nproj];
+    TProfile2D *hECAL_tracksDzSig[Nproj];
+
+    std::vector<float> vECAL_tracksPt_[Nproj];
+    std::vector<float> vECAL_tracksQPt_[Nproj];
+    std::vector<float> vECAL_tracksD0_[Nproj];
+    std::vector<float> vECAL_tracksD0Sig_[Nproj];
+    std::vector<float> vECAL_tracksDz_[Nproj];
+    std::vector<float> vECAL_tracksDzSig_[Nproj];
+    std::vector<float> vECAL_tracks_[Nproj];
+    std::vector<float> vECAL_tracksPt_max_[Nproj];
+    std::vector<float> vECAL_tracksD0_max_[Nproj];
+    std::vector<float> vECAL_tracksD0Sig_max_[Nproj];
+    std::vector<float> vECAL_tracksDz_max_[Nproj];
+    std::vector<float> vECAL_tracksDzSig_max_[Nproj];
+
 
     float m0_;
     std::vector<float> vFC_inputs_;
@@ -398,6 +467,13 @@ static const double eta_bins_HBHE[2*(hcaldqm::constants::IETA_MAX_HE-1)+1] =
                    -1.218, -1.131, -1.044, -0.957, -0.870, -0.783, -0.695, -0.609, -0.522, -0.435, -0.348, -0.261, -0.174, -0.087, 0.000,
                     0.087,  0.174,  0.261,  0.348,  0.435,  0.522,  0.609,  0.695,  0.783,  0.870,  0.957,  1.044,  1.131,  1.218,
                     1.305,  1.392,  1.479,  1.566,  1.653,  1.740,  1.830,  1.930,  2.043,  2.172,  2.322,  2.500,  2.650,  3.000}; // 57
+
+
+static const std::string projections[Nproj] = {"_atECALfixIP"}; //57425
+static const std::string hit_projections[Nhitproj] = {"_atPV"};
+static const std::string adj_projections[Nadjproj] = {"_5x5", "_3x3"};
+static const int eta_nbins_HBHE = 2*(HBHE_IETA_MAX_HE-1);
+static const int granularityMultiECAL=5;
 
 
 //
