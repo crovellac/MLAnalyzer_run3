@@ -108,8 +108,8 @@ with h5py.File(f'{outStr}', 'w') as proper_data:
             # Initialize event
             rhTree.GetEntry(iEvt)
 
-            if iEvt % 100 == 0:
-                print(" .. Processing entry",iEvt)
+            if iEvt % 10 == 0:
+                print(" .. Processing entry "+str(iEvt)+" of "+str(iEvtEnd))
 
             # Jet attributes
             #ams    = rhTree.A_mass
@@ -118,7 +118,7 @@ with h5py.File(f'{outStr}', 'w') as proper_data:
             #ietas  = rhTree.jetSeed_ieta
             iphis  = rhTree.SC_iphi
             ietas  = rhTree.SC_ieta
-            #ys  = min(len(ams), len(ietas), len(iphis))
+            idRs   = rhTree.RecoEleDR
             ys     = min(len(ietas), len(iphis))
             if ys < 2: continue
             end_idx = end_idx + ys
@@ -146,12 +146,22 @@ with h5py.File(f'{outStr}', 'w') as proper_data:
                 dataset.resize((end_idx,13, 125, 125) if 'all_jet' in name else (end_idx,1))
 
             for i in range(ys):
-                #print(np.shape( proper_data['all_jet'][end_idx - ys + i, :, :, :]))
-                #print(np.shape( crop_jet(X_CMSII, iphis[i], ietas[i], jet_shape=125)))
+                if idRs[i] < 50.0:      #If this is the second electron of a dielectron, just recenter the previous image
+                    end_idx = end_idx-1
+                    for name, dataset in datasets.items():
+                        dataset.resize((end_idx,13, 125, 125) if 'all_jet' in name else (end_idx,1))
+                    avg_iphi = (iphis[i]+iphis[i-1])/2
+                    avg_ieta = (ietas[i]+ietas[i-1])/2
+                    proper_data['all_jet'][end_idx - ys + i, :, :, :] = crop_jet(X_CMSII, avg_iphi, avg_ieta, jet_shape=125)
+                    proper_data['ieta'][end_idx - ys + i, :] = ietas[i]
+                    proper_data['iphi'][end_idx - ys + i, :] = iphis[i]
+                    continue
+                #Nominal case
                 proper_data['all_jet'][end_idx - ys + i, :, :, :] = crop_jet(X_CMSII, iphis[i], ietas[i], jet_shape=125)
-                #proper_data['am'][end_idx - ys + i, :] = ams[i]
                 proper_data['ieta'][end_idx - ys + i, :] = ietas[i]
                 proper_data['iphi'][end_idx - ys + i, :] = iphis[i]
+                #proper_data['idR'][end_idx - ys + i, :] = idRs[i]
+                #proper_data['am'][end_idx - ys + i, :] = ams[i]
                 #proper_data['apt'][end_idx - ys + i, :] = apts[i]
 
 

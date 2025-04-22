@@ -10,7 +10,11 @@ struct gen_obj {
 };
 
 std::vector<gen_obj> vAs;
+std::vector<gen_obj> all_vAs;
+std::vector<gen_obj> matched_vAs;
 std::vector<unsigned int> vGenEleIdxs;
+
+std::vector<unsigned int> recoIdxsOfFirstDaughters;
 
 // Initialize branches _____________________________________________________//
 void SCRegressor::branchesH2aaSel ( TTree* tree, edm::Service<TFileService> &fs )
@@ -62,13 +66,15 @@ bool SCRegressor::runH2aaSel ( const edm::Event& iEvent, const edm::EventSetup& 
       double samplePhi = vAs[iA].phi;
       if (iGen->mother()->eta() == sampleEta && iGen->mother()->phi() == samplePhi) alreadyCounted = true;
     }
-    //Only add the pseudoscalar if it's not already counted
-    if (!alreadyCounted) {
-      float dR = reco::deltaR(iGen->mother()->daughter(0)->eta(),iGen->mother()->daughter(0)->phi(), iGen->mother()->daughter(1)->eta(),iGen->mother()->daughter(1)->phi());
+    //Make the pseudoscalar struct
+    float dR = reco::deltaR(iGen->mother()->daughter(0)->eta(),iGen->mother()->daughter(0)->phi(), iGen->mother()->daughter(1)->eta(),iGen->mother()->daughter(1)->phi());
       gen_obj MotherA = { iGen->mother()->energy(), iGen->mother()->pt(), iGen->mother()->phi(), iGen->mother()->eta(), iGen->mother()->mass(), dR };
+    //Only add the pseudoscalar to vAs if it's not already counted
+    if (!alreadyCounted) {
       vAs.push_back( MotherA );
     } 
     vGenEleIdxs.push_back(iG);
+    all_vAs.push_back( MotherA );
   } // gen particles
   if ( vAs.size() != 2) return false;
   
@@ -77,9 +83,24 @@ bool SCRegressor::runH2aaSel ( const edm::Event& iEvent, const edm::EventSetup& 
   float minDR = 100.;
   int minDR_idx = -1;
   //Loop over the gen electrons we just picked out.
-  for ( auto& iG : vGenEleIdxs ) {
+  //for ( auto& iG : vGenEleIdxs ) {
+  for ( unsigned int jG = 0; jG < vGenEleIdxs.size(); jG++ ) {
+    auto iG = vGenEleIdxs[jG];
     reco::GenParticleRef iGenEle( genParticles, iG );
-    
+    gen_obj GenMother = all_vAs[jG];
+
+    //Check to see if we've already matched a gen electron from this mother particle.
+    int motherIdx = -1;
+    for ( unsigned int iA = 0; iA < matched_vAs.size(); iA++ ) {
+      double sampleEta = matched_vAs[iA].eta;
+      double samplePhi = matched_vAs[iA].phi;
+      if (GenMother.eta == sampleEta && GenMother.phi == samplePhi) motherIdx = iA;
+    }
+    if (motherIdx == -1) { //If we didn't already match it, save it now.
+      matched_vAs.push_back(GenMother);	    
+      recoIdxsOfFirstDaughters.push_back(-1);
+    }
+
     //Now loop over all of the reco electrons
     minDR = 100.;
     minDR_idx = -1;
@@ -100,13 +121,13 @@ bool SCRegressor::runH2aaSel ( const edm::Event& iEvent, const edm::EventSetup& 
 
     //Check to see if this index is already present in 
     bool alreadyPresent = false;
-    std::cout << "minDR_idx: " << minDR_idx << std::endl;
+    //std::cout << "minDR_idx:  i" << minDR_idx << std::endl;
     for ( unsigned int i = 0; i < vPreselPhoIdxs_.size(); i++ ) {
       if (minDR_idx == vPreselPhoIdxs_[i]) alreadyPresent = true;
     }
     if (!alreadyPresent) {
       vPreselPhoIdxs_.push_back(minDR_idx);
-    }    
+    }
   } 
     
   return true;

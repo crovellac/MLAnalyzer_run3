@@ -76,6 +76,7 @@ SCRegressor::SCRegressor(const edm::ParameterSet& iConfig)
 
   RHTree->Branch("SC_iphi", &vIphi_Emax_);
   RHTree->Branch("SC_ieta", &vIeta_Emax_);
+  RHTree->Branch("RecoEleDR", &vdR_fromPrevious_);
 
   //branchesPiSel ( RHTree, fs );
   //branchesPhotonSel ( RHTree, fs );
@@ -123,7 +124,7 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
 
   using namespace edm;
-
+  int ieta_global_offset = 55;
   eventId_ = iEvent.id().event();
   runId_ = iEvent.id().run();
   lumiId_ = iEvent.id().luminosityBlock();
@@ -191,17 +192,21 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   // Get coordinates of photon supercluster seed
   hNpassed_img->Fill(0.);
   nEle = 0;
-  int iphi_Emax, ieta_Emax;
-  float Emax;
+  int iphi_Emax, ieta_Emax, iphi_previous, ieta_previous;
+  float Emax, d_ieta, d_iphi, test_dR;
   GlobalPoint pos_Emax;
   std::vector<GlobalPoint> vPos_Emax;
   vIphi_Emax_.clear();
   vIeta_Emax_.clear();
   vRegressPhoIdxs_.clear();
+  vdR_fromPrevious_.clear();
   int iphi_, ieta_; // rows:ieta, cols:iphi
+   
+  iphi_previous = -999;
+  ieta_previous = -999;
 
   for ( unsigned int iP : vPreselPhoIdxs_ ) {
-
+    //std::cout << "Presel Idx: " << iP << std::endl;
     //ElectronRef iEle( electrons, iP);
     reco::GsfElectronRef iEle( electrons, iP ); 
     // Get underlying super cluster
@@ -240,6 +245,7 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       //std::cout << " >> " << iH << ": iphi_,ieta_,E: " << iphi_ << ", " << ieta_ << ", " << iRHit->energy() << std::endl;
     } // SC hits
     
+    ieta_Emax += ieta_global_offset;
     // Apply selection on position of shower seed
     //std::cout << " >> Found: iphi_Emax,ieta_Emax: " << iphi_Emax << ", " << ieta_Emax << std::endl;
     if ( Emax <= zs ) continue;
@@ -248,8 +254,18 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     vIeta_Emax_.push_back( ieta_Emax );
     vPos_Emax.push_back( pos_Emax );
     vRegressPhoIdxs_.push_back( iP );
+
+    d_ieta = ieta_Emax-ieta_previous;
+    d_iphi = std::min(std::abs(iphi_Emax-iphi_previous),std::abs(iphi_Emax-iphi_previous+360)); //accouts for wrap-around of phi
+    test_dR = std::sqrt( d_ieta*d_ieta + d_iphi*d_iphi );
+    //std::cout << "Test dR: " << test_dR << std::endl;
+    vdR_fromPrevious_.push_back( test_dR );
     //std::cout << " >> Found: iphi_Emax,ieta_Emax: " << iphi_Emax << ", " << ieta_Emax << std::endl;
-   
+  
+    //Set up these variables for the next electron check
+    ieta_previous = ieta_Emax;
+    iphi_previous = iphi_Emax;
+
     nEle++;
 
   } // Photons

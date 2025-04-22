@@ -328,6 +328,7 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     std::vector<int> vGenAIdxs_;
     std::vector<float> vIphi_Emax_;
     std::vector<float> vIeta_Emax_;
+    std::vector<float> vdR_fromPrevious_;
 
     //std::vector<std::vector<float>> vEB_SCenergy_;
     std::vector<std::vector<float>> vSC_energy_;

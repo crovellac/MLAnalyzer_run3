@@ -62,7 +62,6 @@ void SCRegressor::fillHBHE ( const edm::Event& iEvent, const edm::EventSetup& iS
   */
 
   // Fill HBHE rechits 
-  std::cout << "HBHERecHitsH_.size(): " << HBHERecHitsH_->size() << std::endl;
   for ( HBHERecHitCollection::const_iterator iRHit = HBHERecHitsH_->begin();
         iRHit != HBHERecHitsH_->end(); ++iRHit ) {
 

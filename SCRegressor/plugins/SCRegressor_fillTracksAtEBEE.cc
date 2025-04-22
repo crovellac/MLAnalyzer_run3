@@ -83,7 +83,7 @@ void SCRegressor::fillTracksAtEBEE ( const edm::Event& iEvent, const edm::EventS
 
     eta = iTk->eta();
     phi = iTk->phi();
-    std::cout << "eta: " << eta <<", phi: " << phi << std::endl;
+    //std::cout << "eta: " << eta <<", phi: " << phi << std::endl;
     //if ( std::abs(eta) > 3. ) continue;
     if ( std::abs(eta) > 1.5 ) continue;
 

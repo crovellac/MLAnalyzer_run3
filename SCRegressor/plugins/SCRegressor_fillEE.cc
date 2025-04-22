@@ -49,8 +49,6 @@ void SCRegressor::fillEE ( const edm::Event& iEvent, const edm::EventSetup& iSet
   edm::Handle<EcalRecHitCollection> EERecHitsH_;
   iEvent.getByToken( EERecHitCollectionT_, EERecHitsH_ );
   
-  std::cout << "EERecHitsH_->size(): " << EERecHitsH_->size() << std::endl;
-
   // Fill EE rechits
   for ( EcalRecHitCollection::const_iterator iRHit = EERecHitsH_->begin();
         iRHit != EERecHitsH_->end(); ++iRHit ) {
