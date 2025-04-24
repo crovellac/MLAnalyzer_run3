@@ -37,7 +37,6 @@ void SCRegressor::branchesEE ( TTree* tree, edm::Service<TFileService> &fs ) {
 
 // Fill EE rechits _________________________________________________________________//
 void SCRegressor::fillEE ( const edm::Event& iEvent, const edm::EventSetup& iSetup ) {
-  std::cout << "Starting fillEE" << std::endl;
   int ix_, iy_, iz_, idx_; // rows:ieta, cols:iphi
   float energy_;
 
