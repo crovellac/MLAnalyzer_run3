@@ -91,7 +91,7 @@ print(" >> Processing entries: [",iEvtStart,"->",iEvtEnd,")")
 sw = ROOT.TStopwatch()
 sw.Start()
 with h5py.File(f'{outStr}', 'w') as proper_data:
-        dataset_names = ['all_jet', 'ieta', 'iphi']
+        dataset_names = ['all_jet', 'ieta', 'iphi', 'am', 'apt', 'adR', 'ae']
         datasets = {
             name: proper_data.create_dataset(
                 name,
@@ -112,10 +112,10 @@ with h5py.File(f'{outStr}', 'w') as proper_data:
                 print(" .. Processing entry "+str(iEvt)+" of "+str(iEvtEnd))
 
             # Jet attributes
-            #ams    = rhTree.A_mass
-            #apts   = rhTree.A_pT
-            #iphis  = rhTree.jetSeed_iphi
-            #ietas  = rhTree.jetSeed_ieta
+            ams    = rhTree.A_mass
+            apts   = rhTree.A_pT
+            adRs   = rhTree.A_DR
+            aes    = rhTree.A_E
             iphis  = rhTree.SC_iphi
             ietas  = rhTree.SC_ieta
             idRs   = rhTree.RecoEleDR
@@ -155,14 +155,20 @@ with h5py.File(f'{outStr}', 'w') as proper_data:
                     proper_data['all_jet'][end_idx - ys + i, :, :, :] = crop_jet(X_CMSII, avg_iphi, avg_ieta, jet_shape=125)
                     proper_data['ieta'][end_idx - ys + i, :] = ietas[i]
                     proper_data['iphi'][end_idx - ys + i, :] = iphis[i]
+                    proper_data['am'][end_idx - ys + i, :] = ams[i]
+                    proper_data['apt'][end_idx - ys + i, :] = apts[i]
+                    proper_data['adR'][end_idx - ys + i, :] = adRs[i]
+                    proper_data['ae'][end_idx - ys + i, :] = aes[i]
                     continue
                 #Nominal case
                 proper_data['all_jet'][end_idx - ys + i, :, :, :] = crop_jet(X_CMSII, iphis[i], ietas[i], jet_shape=125)
                 proper_data['ieta'][end_idx - ys + i, :] = ietas[i]
                 proper_data['iphi'][end_idx - ys + i, :] = iphis[i]
-                #proper_data['idR'][end_idx - ys + i, :] = idRs[i]
-                #proper_data['am'][end_idx - ys + i, :] = ams[i]
-                #proper_data['apt'][end_idx - ys + i, :] = apts[i]
+                proper_data['am'][end_idx - ys + i, :] = ams[i]
+                proper_data['apt'][end_idx - ys + i, :] = apts[i]
+                proper_data['adR'][end_idx - ys + i, :] = adRs[i]
+                proper_data['ae'][end_idx - ys + i, :] = aes[i]
+
 
 
 print(" >> Real time:",sw.RealTime()/60.,"minutes")
