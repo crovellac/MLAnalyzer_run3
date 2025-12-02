@@ -411,6 +411,9 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     std::vector<float> vA_status_;
     float mHgen_;
 
+    std::vector<long unsigned int> vA_numGenDaughters_;
+    std::vector<int> vA_numRecoDaughters_;
+
     std::vector<float> vOutPart_pdgId_;
 
     std::vector<float> vJet_energy_;
@@ -437,7 +440,10 @@ class SCRegressor : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
     TH1F * hMinDRgenRecoPho;
     TH1F * hMinDRrecoPtoGenPt;
     TH1F * hJetNeuM;
-    
+   
+    TH1F * genElepT;
+    TH1F * recoElepT;
+
     //Used for tracks
     TH2F *hEvt_EE_tracks[nEE];
     TH2F *hEvt_EE_tracksPt[nEE];

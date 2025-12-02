@@ -7,6 +7,7 @@ struct gen_obj {
   double eta;
   double mass;
   double dR;
+  long unsigned int numGenDaughters;
 };
 
 std::vector<gen_obj> vAs;
@@ -30,9 +31,13 @@ void SCRegressor::branchesH2aaSel ( TTree* tree, edm::Service<TFileService> &fs 
   tree->Branch("A_eta",     &vA_eta_);
   tree->Branch("A_phi",     &vA_phi_);
   tree->Branch("A_recoIdx", &vA_recoIdx_);
+  tree->Branch("numGenEles", &vA_numGenDaughters_);
+  tree->Branch("numRecoEles", &vA_numRecoDaughters_);
 
   hdPhidEta = fs->make<TH2F>("dPhidEta_GG", "#Delta(#phi,#eta,m);#Delta#phi(#gamma,#gamma);#Delta#eta(#gamma,#gamma)",
               6, 0., 6.*0.0174, 6, 0., 6.*0.0174);
+  genElepT = fs->make<TH1F>("genElepT", "Gen electrons by pT;Gen electron pT (Gev);Count", 100, 0, 200);
+  recoElepT = fs->make<TH1F>("recoElepT", "Reco electrons by pT;Reco electron pT (Gev);Count", 100, 0, 200);
 }
 
 // Run event selection ___________________________________________________________________//
@@ -56,7 +61,7 @@ bool SCRegressor::runH2aaSel ( const edm::Event& iEvent, const edm::EventSetup& 
     //We pick out an electron whose mother is the pseudoscalar which has two daughters.
     //If this is the case, we save the index of this electron, and add the mother to our vector.
     if (std::abs(iGen->pdgId()) != 11) continue;
-    if (std::abs(iGen->mother()->pdgId()) != 25) continue;
+    if (std::abs(iGen->mother()->pdgId()) != 9000036) continue;
     if (iGen->mother()->numberOfDaughters() != 2) continue;
     if (std::abs(iGen->mother()->daughter(0)->pdgId()) != 11 || std::abs(iGen->mother()->daughter(1)->pdgId()) != 11) continue;
     //Now be sure that we're not double-counting a pseudoscalar
@@ -68,7 +73,7 @@ bool SCRegressor::runH2aaSel ( const edm::Event& iEvent, const edm::EventSetup& 
     }
     //Make the pseudoscalar struct
     float dR = reco::deltaR(iGen->mother()->daughter(0)->eta(),iGen->mother()->daughter(0)->phi(), iGen->mother()->daughter(1)->eta(),iGen->mother()->daughter(1)->phi());
-      gen_obj MotherA = { iGen->mother()->energy(), iGen->mother()->pt(), iGen->mother()->phi(), iGen->mother()->eta(), iGen->mother()->mass(), dR };
+      gen_obj MotherA = { iGen->mother()->energy(), iGen->mother()->pt(), iGen->mother()->phi(), iGen->mother()->eta(), iGen->mother()->mass(), dR, iGen->mother()->numberOfDaughters() };
     //Only add the pseudoscalar to vAs if it's not already counted
     if (!alreadyCounted) {
       vAs.push_back( MotherA );
@@ -100,7 +105,7 @@ bool SCRegressor::runH2aaSel ( const edm::Event& iEvent, const edm::EventSetup& 
       matched_vAs.push_back(GenMother);	    
       recoIdxsOfFirstDaughters.push_back(-1);
     }
-
+    genElepT->Fill(iGenEle->pt());
     //Now loop over all of the reco electrons
     minDR = 100.;
     minDR_idx = -1;
@@ -152,7 +157,9 @@ void SCRegressor::fillH2aaSel ( const edm::Event& iEvent, const edm::EventSetup&
   vA_mass_.clear();
   vA_DR_.clear();
   vA_recoIdx_.clear();
-  
+  vA_numGenDaughters_.clear();
+  vA_numRecoDaughters_.clear();
+
   for ( unsigned int iG = 0; iG < vAs.size(); iG++ ) {
     gen_obj MotherA = vAs[iG];
     vA_E_.push_back( MotherA.E );
@@ -161,6 +168,13 @@ void SCRegressor::fillH2aaSel ( const edm::Event& iEvent, const edm::EventSetup&
     vA_phi_.push_back( MotherA.phi );
     vA_mass_.push_back( MotherA.mass );
     vA_DR_.push_back( MotherA.dR );
+    vA_numGenDaughters_.push_back( MotherA.numGenDaughters );
+    vA_numRecoDaughters_.push_back( vPreselPhoIdxs_.size() );
+  }
+  
+  for ( unsigned int iE = 0; iE < vRegressPhoIdxs_.size(); iE++) {
+    reco::GsfElectronRef iRecoEle( electrons, iE ); 
+    recoElepT->Fill(iRecoEle->pt());
   }
 
   /*

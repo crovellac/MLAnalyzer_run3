@@ -224,9 +224,15 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     // Loop over SC hits of electron
     for(unsigned iH(0); iH != SCHits.size(); ++iH) {
       // Get DetId
-      if ( SCHits[iH].first.subdetId() != EcalBarrel ) continue;
+      if ( SCHits[iH].first.subdetId() != EcalBarrel ) {
+        std::cout << "Cut because: SCHits[iH].first.subdetId() != EcalBarrel" << std::endl;
+        continue;
+      }
       EcalRecHitCollection::const_iterator iRHit( EBRecHitsH->find(SCHits[iH].first) );
-      if ( iRHit == EBRecHitsH->end() ) continue;
+      if ( iRHit == EBRecHitsH->end() ) { 
+	std::cout << "Cut because: iRHit == EBRecHitsH->end()" << std::endl;
+        continue;
+      }
 
       // Convert coordinates to ordinals
       EBDetId ebId( iRHit->id() );
@@ -248,8 +254,14 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     ieta_Emax += ieta_global_offset;
     // Apply selection on position of shower seed
     //std::cout << " >> Found: iphi_Emax,ieta_Emax: " << iphi_Emax << ", " << ieta_Emax << std::endl;
-    if ( Emax <= zs ) continue;
-    if ( ieta_Emax > 169 - 16 || ieta_Emax < 15 ) continue; // seed centered on [15,15] so must be padded by 15 below and 16 above
+    if ( Emax <= zs )  {
+      std::cout << "Cut because: Emax <= zs " << std::endl;    
+      continue;
+    }
+    if ( ieta_Emax > 169 - 16 || ieta_Emax < 15 )  {
+      std::cout << "Cut because: ieta_Emax > 169 - 16 || ieta_Emax < 15 " << std::endl;
+      continue; // seed centered on [15,15] so must be padded by 15 below and 16 above
+    }
     vIphi_Emax_.push_back( iphi_Emax );
     vIeta_Emax_.push_back( ieta_Emax );
     vPos_Emax.push_back( pos_Emax );

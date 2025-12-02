@@ -10,7 +10,7 @@ options.register('skipEvents',
     info = "skipEvents")
 # TODO: put this option in cmsRun scripts
 options.register('processMode',
-    default='EventLevel',
+    default='JetLevel',
     #default='EventLevel',
     mult=VarParsing.VarParsing.multiplicity.singleton,
     mytype=VarParsing.VarParsing.varType.string,
@@ -29,7 +29,7 @@ process.load("RecoLocalTracker.SiPixelRecHits.SiPixelRecHits_cfi")
 process.load("RecoLocalTracker.SiStripRecHitConverter.SiStripRecHitConverter_cfi")
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 process.GlobalTag.globaltag = cms.string('130X_mcRun3_2023_realistic_postBPix_v5')
-#process.GlobalTag.globaltag = cms.string('130X_dataRun3_HLT_v1')
+# process.GlobalTag.globaltag = cms.string('130X_dataRun3_HLT_v1')
 process.es_prefer_GlobalTag = cms.ESPrefer('PoolDBESSource','GlobalTag')
 
 process.load("RecoLocalCalo.EcalRecAlgos.EcalSeverityLevelESProducer_cfi")
@@ -55,8 +55,7 @@ print (" >> Loaded",len(options.inputFiles),"input files from list.")
 
 
 process.options = cms.untracked.PSet(
-    wantSummary = cms.untracked.bool(True),
-    numberOfThreads = cms.untracked.uint32(4)
+    wantSummary = cms.untracked.bool(True)
     # ,SkipEvent = cms.untracked.vstring('ProductNotFound')
 )
 
@@ -82,11 +81,8 @@ process.hltFilter = cms.EDFilter("HLTHighLevel",
                                           )
 
 process.p = cms.Path(
- process.siStripMatchedRecHits*
- process.siPixelRecHits*
- process.MeasurementTrackerEvent*
- process.TrackRefitter*
+process.siStripMatchedRecHits*process.siPixelRecHits*process.MeasurementTrackerEvent*process.TrackRefitter*
  process.hltFilter*
  # process.patDefaultSequence*
- process.fevt
+process.fevt
 )
