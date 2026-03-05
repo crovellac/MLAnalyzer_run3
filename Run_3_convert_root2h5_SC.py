@@ -11,7 +11,7 @@ from numpy.lib.stride_tricks import as_strided
 
 import argparse
 parser = argparse.ArgumentParser(description='Process some integers.')
-parser.add_argument('-i', '--infile', default='output_qqgg.root', type=str, help='Input root file.')
+parser.add_argument('-i', '--input_list', default='ntuple_list.txt', type=str, help='List of input ROOT files')
 parser.add_argument('-o', '--outdir', default='.', type=str, help='Output pq file dir.')
 parser.add_argument('-d', '--decay', default='test', type=str, help='Decay name.')
 parser.add_argument('-n', '--idx', default=0, type=int, help='Input root file index.')
@@ -68,14 +68,24 @@ def crop_jet(imgECAL, iphi, ieta, jet_shape=125):
 
     return img_crop
 
-rhTreeStr = args.infile
+files = []
+with open(args.input_list,"r") as filelist:
+  filenames = filelist.readlines()
+  for filename in filenames:
+    files.append(filename.strip())
+
+print(files)
+
+#Open files
 rhTree = ROOT.TChain("fevt/RHTree")
-rhTree.Add(rhTreeStr)
+nEvts = 0
+for filename in files:
+  rhTree.Add(filename)
+
 nEvts = rhTree.GetEntries()
 assert nEvts > 0
-print (" >> Input file:",rhTreeStr)
 print (" >> nEvts:",nEvts)
-outStr = '%s/%s_%s.h5'%(args.outdir, args.decay, args.idx)
+outStr = '%s_%s.h5'%(args.decay, args.idx)
 print (" >> Output file:",outStr)
 
 ##### MAIN #####
@@ -85,6 +95,7 @@ print (" >> Output file:",outStr)
 iEvtStart = 0
 # iEvtEnd   = 40
 iEvtEnd   = nEvts
+iEvtEnd = 300
 assert iEvtEnd <= nEvts
 print(" >> Processing entries: [",iEvtStart,"->",iEvtEnd,")")
 
@@ -108,8 +119,8 @@ with h5py.File(f'{outStr}', 'w') as proper_data:
             # Initialize event
             rhTree.GetEntry(iEvt)
 
-            if iEvt % 10 == 0:
-                print(" .. Processing entry "+str(iEvt)+" of "+str(iEvtEnd))
+            #if iEvt % 10 == 0:
+            #    print(" .. Processing entry "+str(iEvt)+" of "+str(iEvtEnd))
 
             # Jet attributes
             ams    = rhTree.A_mass
@@ -119,8 +130,19 @@ with h5py.File(f'{outStr}', 'w') as proper_data:
             iphis  = rhTree.SC_iphi
             ietas  = rhTree.SC_ieta
             idRs   = rhTree.RecoEleDR
-            ys     = min(len(ietas), len(iphis))
-            if ys < 2: continue
+
+            #print(f"ietas = {ietas}, iphis = {iphis}, ams = {ams}, adRs = {adRs}, idRs = {idRs}")
+
+            #ys     = min(len(ietas), len(iphis))
+            ys  = min(len(ams), len(ietas), len(iphis))
+            #ys = len(ams)
+            print(f"Event {iEvt} of {iEvtEnd}")
+            print(f"ams: {ams}")
+            print(f"iphis: {iphis}")
+            print(f"ietas: {ietas}")
+            print(f"ys: {ys}")
+            #print(f"ys = {ys}, idRs = {idRs}")
+            #if ys < 2: continue
             end_idx = end_idx + ys
 
             ECAL_energy = np.array(rhTree.ECAL_energy).reshape(280,360)
@@ -144,32 +166,20 @@ with h5py.File(f'{outStr}', 'w') as proper_data:
 
             for name, dataset in datasets.items():
                 dataset.resize((end_idx,13, 125, 125) if 'all_jet' in name else (end_idx,1))
-
+            print(f"ys = {ys}, len(ams) = {len(ams)}")
             for i in range(ys):
-                if idRs[i] < 50.0:      #If this is the second electron of a dielectron, just recenter the previous image
-                    end_idx = end_idx-1
-                    for name, dataset in datasets.items():
-                        dataset.resize((end_idx,13, 125, 125) if 'all_jet' in name else (end_idx,1))
-                    avg_iphi = (iphis[i]+iphis[i-1])/2
-                    avg_ieta = (ietas[i]+ietas[i-1])/2
-                    proper_data['all_jet'][end_idx - ys + i, :, :, :] = crop_jet(X_CMSII, avg_iphi, avg_ieta, jet_shape=125)
-                    proper_data['ieta'][end_idx - ys + i, :] = ietas[i]
-                    proper_data['iphi'][end_idx - ys + i, :] = iphis[i]
-                    proper_data['am'][end_idx - ys + i, :] = ams[i]
-                    proper_data['apt'][end_idx - ys + i, :] = apts[i]
-                    proper_data['adR'][end_idx - ys + i, :] = adRs[i]
-                    proper_data['ae'][end_idx - ys + i, :] = aes[i]
-                    continue
+                print(f"i = {i}")
                 #Nominal case
                 proper_data['all_jet'][end_idx - ys + i, :, :, :] = crop_jet(X_CMSII, iphis[i], ietas[i], jet_shape=125)
                 proper_data['ieta'][end_idx - ys + i, :] = ietas[i]
                 proper_data['iphi'][end_idx - ys + i, :] = iphis[i]
+                print(f"i = {i}, len(ams) = {len(ams)}")
                 proper_data['am'][end_idx - ys + i, :] = ams[i]
                 proper_data['apt'][end_idx - ys + i, :] = apts[i]
                 proper_data['adR'][end_idx - ys + i, :] = adRs[i]
                 proper_data['ae'][end_idx - ys + i, :] = aes[i]
-
-
+            print(f"end_idx: {end_idx}")       
+ 
 
 print(" >> Real time:",sw.RealTime()/60.,"minutes")
 print(" >> CPU time: ",sw.CpuTime() /60.,"minutes")
