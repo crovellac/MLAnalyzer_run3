@@ -266,7 +266,30 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     vIeta_Emax_.push_back( ieta_Emax );
     vPos_Emax.push_back( pos_Emax );
     vRegressPhoIdxs_.push_back( iP );
+    
+    //Look at tracks
+    auto mainTrack = iEle->gsfTrack();
+    
+    auto eta1 = mainTrack->eta();
+    auto phi1 = mainTrack->phi();
+    std::cout << "Main GSF track pt: " << mainTrack->pt() << " eta: " << eta1 << " phi: " << phi1 << std::endl;
 
+    std::cout << "Looking at tracks for electron: " << std::endl;
+    const auto& ambTracks = iEle->ambiguousGsfTracks();
+    for (const auto& trkRef : ambTracks) {
+        if (trkRef.isNonnull()) {
+	    auto eta2 = trkRef->eta();
+	    auto phi2 = trkRef->phi(); 
+            std::cout << "Ambiguous track pt: "
+                      << trkRef->pt()
+                      << " eta: " << trkRef->eta()
+                      << " phi: " << trkRef->phi()
+                      << std::endl;
+	    auto delta_eta = eta2 - eta1;
+	    auto delta_phi = phi2 - phi1;
+	    std::cout << "dR between this and main track: " << std::sqrt(delta_eta*delta_eta + delta_phi*delta_phi) << std::endl;
+        }
+    }
     d_ieta = ieta_Emax-ieta_previous;
     d_iphi = std::min(std::abs(iphi_Emax-iphi_previous),std::abs(iphi_Emax-iphi_previous+360)); //accouts for wrap-around of phi
     test_dR = std::sqrt( d_ieta*d_ieta + d_iphi*d_iphi );
@@ -279,7 +302,6 @@ SCRegressor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     iphi_previous = iphi_Emax;
 
     nEle++;
-
   } // Photons
 
   // Enforce selection

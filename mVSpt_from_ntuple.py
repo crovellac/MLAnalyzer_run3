@@ -6,7 +6,7 @@ import pickle
 import os, ROOT
 
 # Usage: python plot_mass_pt_2D.py input.root
-with open("list_ntuples_unbiased.txt","r") as fin:
+with open("list_ntuples_biased.txt","r") as fin:
   filenames = fin.readlines()
 
 for filename in filenames:
@@ -20,7 +20,7 @@ for filename in filenames:
 #allmasses = []
 #allpts = []
 
-mVSptHist = ROOT.TH2F("mVSpT", "Mass vs pT", 17, 0.01, 1.2, 16, 40, 160)
+mVSptHist = ROOT.TH2F("mVSpT", "Mass vs pT", 34, 0.01, 1.2, 38, 25, 160)
 
 
 for n,filename in enumerate(filenames):
