@@ -18,7 +18,7 @@ cmsenv
 # Clone the necessary repos
 git clone https://github.com/svfit/ClassicSVfit TauAnalysis/ClassicSVfit -b fastMTT_21_06_2018
 git clone https://github.com/svfit/SVfitTF TauAnalysis/SVfitTF
-git@github.com:crovellac/MLAnalyzer_run3.git
+git clone https://github.com/crovellac/MLAnalyzer_run3.git
 scram b -j 16
 
 # Run the analyzer
